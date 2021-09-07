@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v13
         with:
           java-version: openjdk@1.11
 
@@ -36,7 +36,7 @@ jobs:
             ${{ runner.os }}-${{ github.ref }}-ivy2
 
       - name: Set up Mill
-        uses: jodersky/setup-mill@v0.2.3
+        run: ./millw version
 
       - name: Check Style
-        run: mill all __.checkFormat
+        run: ./millw all __.checkFormat
