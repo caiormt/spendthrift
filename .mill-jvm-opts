@@ -1,0 +1,8 @@
+-Dfile.encoding=UTF8
+-Xss8M
+-Xmx1G
+-XX:ReservedCodeCacheSize=500M
+-XX:+UseStringDeduplication
+-XX:+UseLWPSynchronization
+-XX:+OptimizeStringConcat
+-XX:+UseG1GC
