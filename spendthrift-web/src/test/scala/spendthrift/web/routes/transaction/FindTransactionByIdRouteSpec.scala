@@ -13,7 +13,7 @@ import org.http4s.implicits.*
 
 import munit.*
 
-import spendthrift.adapters.repositories.inmemory.*
+import spendthrift.ports.*
 
 import spendthrift.domain.entities.transactions.*
 
@@ -27,15 +27,13 @@ import java.util.*
 
 final class FindTransactionByIdRouteSpec extends HttpRouteSuite {
 
-  override def beforeEach(context: BeforeEach): Unit = {
-    super.beforeEach(context)
-    InMemoryTransactionRepository.clear()
-  }
-
   test("Must return nothing when transaction not found") {
     val nilUUID = new UUID(0L, 0L)
 
-    val gateway    = new InMemoryTransactionRepository[IO]
+    val gateway    = new FindTransactionByIdGateway[IO] {
+      override def findById(id: TransactionId): IO[Option[Transaction]] =
+        IO(assertEquals(id.value, nilUUID, "Must receive requested id")) *> IO.none
+    }
     val usecase    = new FindTransactionByIdUseCase[IO](gateway)
     val controller = new FindTransactionByIdController[IO](usecase)
     val api        = new FindTransactionByIdRoute[IO](controller)
@@ -48,18 +46,17 @@ final class FindTransactionByIdRouteSpec extends HttpRouteSuite {
   }
 
   test("Must return transaction found") {
-    val nilUUID = new UUID(0L, 0L)
-    val date    = ZonedDateTime.of(LocalDate.now, LocalTime.MIDNIGHT, ZoneOffset.UTC)
-    val value   = 7.50
+    val nilUUID     = new UUID(0L, 0L)
+    val date        = ZonedDateTime.of(LocalDate.now, LocalTime.MIDNIGHT, ZoneOffset.UTC)
+    val value       = 7.50
+    val description = "Gasoline"
 
     val transaction = Transaction(
       TransactionId(nilUUID),
       TransactionDate(date),
       TransactionValue(value),
-      TransactionDescription("Gasoline")
+      TransactionDescription(description)
     )
-
-    InMemoryTransactionRepository.save(transaction)
 
     val expected = Json.obj(
       "id"          -> Json.fromString(nilUUID.toString),
@@ -68,10 +65,13 @@ final class FindTransactionByIdRouteSpec extends HttpRouteSuite {
         "amount"   -> Json.fromBigDecimal(value),
         "currency" -> Json.fromString("BRL")
       ),
-      "description" -> Json.fromString("Gasoline")
+      "description" -> Json.fromString(description)
     )
 
-    val gateway    = new InMemoryTransactionRepository[IO]
+    val gateway    = new FindTransactionByIdGateway[IO] {
+      override def findById(id: TransactionId): IO[Option[Transaction]] =
+        IO(assertEquals(id.value, nilUUID, "Must receive requested id")) *> IO.some(transaction)
+    }
     val usecase    = new FindTransactionByIdUseCase[IO](gateway)
     val controller = new FindTransactionByIdController[IO](usecase)
     val api        = new FindTransactionByIdRoute[IO](controller)

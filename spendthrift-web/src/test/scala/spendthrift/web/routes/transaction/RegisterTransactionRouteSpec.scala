@@ -11,36 +11,56 @@ import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.implicits.*
 
+import squants.market.*
+
 import munit.*
 
-import spendthrift.adapters.repositories.inmemory.*
+import spendthrift.ports.*
 
 import spendthrift.commands.usecases.transaction.*
 
+import spendthrift.domain.entities.transactions.*
+
+import spendthrift.effects.generators.*
+
 import spendthrift.presentation.controllers.transaction.*
+
+import java.time.*
+import java.time.format.*
+import java.util.*
 
 final class RegisterTransactionRouteSpec extends HttpRouteSuite {
 
-  override def beforeEach(context: BeforeEach): Unit = {
-    super.beforeEach(context)
-    InMemoryTransactionRepository.clear()
-  }
-
   test("Must register a new transaction") {
-    val date        = Json.fromString("2022-03-12T15:30:00Z")
-    val value       = Json.obj(
-      "amount"   -> Json.fromBigDecimal(4.96),
-      "currency" -> Json.fromString("USD")
-    )
-    val description = Json.fromString("Gasoline")
+    val nilUUID     = new UUID(0L, 0L)
+    val date        = ZonedDateTime.of(LocalDate.now, LocalTime.MIDNIGHT, ZoneOffset.UTC)
+    val value       = 4.96
+    val description = "Gasoline"
 
     val entity = Json.obj(
-      "date"        -> date,
-      "value"       -> value,
-      "description" -> description
+      "date"        -> Json.fromString(date.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+      "value"       -> Json.obj(
+        "amount"   -> Json.fromBigDecimal(value),
+        "currency" -> Json.fromString("USD")
+      ),
+      "description" -> Json.fromString(description)
     )
 
-    val gateway    = new InMemoryTransactionRepository[IO]
+    val expectedTransaction = Transaction(
+      TransactionId(nilUUID),
+      TransactionDate(date),
+      TransactionValue(Money(value, USD)),
+      TransactionDescription(description)
+    )
+
+    given UUIDGen[IO] with
+      override def randomUUID: IO[UUID] =
+        IO.delay(nilUUID)
+
+    val gateway    = new RegisterTransactionGateway[IO] {
+      override def register(transaction: Transaction): IO[Unit] =
+        IO(assertEquals(transaction, expectedTransaction, "Must receive transaction"))
+    }
     val usecase    = new RegisterTransactionUseCase[IO](gateway)
     val controller = new RegisterTransactionController[IO](usecase)
     val api        = new RegisterTransactionRoute[IO](controller)
@@ -54,26 +74,41 @@ final class RegisterTransactionRouteSpec extends HttpRouteSuite {
   }
 
   test("Must register a new transaction omitting currency") {
-    val date        = Json.fromString("2022-03-12T15:30:00Z")
-    val amount      = Json.fromBigDecimal(7.50)
-    val value       = Json.obj(
-      "amount"   -> amount,
-      "currency" -> Json.fromString("BRL")
-    )
-    val description = Json.fromString("Gasoline")
+    val nilUUID     = new UUID(0L, 0L)
+    val date        = ZonedDateTime.of(LocalDate.now, LocalTime.MIDNIGHT, ZoneOffset.UTC)
+    val value       = 7.50
+    val description = "Gasoline"
 
-    val entity   = Json.obj(
-      "date"        -> date,
-      "value"       -> Json.obj("amount" -> amount),
-      "description" -> description
+    val entity = Json.obj(
+      "date"        -> Json.fromString(date.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+      "value"       -> Json.obj("amount" -> Json.fromBigDecimal(value)),
+      "description" -> Json.fromString(description)
     )
+
     val expected = Json.obj(
-      "date"        -> date,
-      "value"       -> value,
-      "description" -> description
+      "date"        -> Json.fromString(date.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+      "value"       -> Json.obj(
+        "amount"   -> Json.fromBigDecimal(value),
+        "currency" -> Json.fromString("BRL")
+      ),
+      "description" -> Json.fromString(description)
     )
 
-    val gateway    = new InMemoryTransactionRepository[IO]
+    val expectedTransaction = Transaction(
+      TransactionId(nilUUID),
+      TransactionDate(date),
+      TransactionValue(value),
+      TransactionDescription(description)
+    )
+
+    given UUIDGen[IO] with
+      override def randomUUID: IO[UUID] =
+        IO.delay(nilUUID)
+
+    val gateway    = new RegisterTransactionGateway[IO] {
+      override def register(transaction: Transaction): IO[Unit] =
+        IO(assertEquals(transaction, expectedTransaction, "Must receive transaction"))
+    }
     val usecase    = new RegisterTransactionUseCase[IO](gateway)
     val controller = new RegisterTransactionController[IO](usecase)
     val api        = new RegisterTransactionRoute[IO](controller)
@@ -87,26 +122,41 @@ final class RegisterTransactionRouteSpec extends HttpRouteSuite {
   }
 
   test("Must register a new transaction omitting value object") {
-    val date        = Json.fromString("2022-03-12T15:30:00Z")
-    val amount      = Json.fromBigDecimal(7.50)
-    val value       = Json.obj(
-      "amount"   -> amount,
-      "currency" -> Json.fromString("BRL")
-    )
-    val description = Json.fromString("Gasoline")
+    val nilUUID     = new UUID(0L, 0L)
+    val date        = ZonedDateTime.of(LocalDate.now, LocalTime.MIDNIGHT, ZoneOffset.UTC)
+    val value       = 7.50
+    val description = "Gasoline"
 
-    val entity   = Json.obj(
-      "date"        -> date,
-      "value"       -> amount,
-      "description" -> description
+    val entity = Json.obj(
+      "date"        -> Json.fromString(date.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+      "value"       -> Json.fromBigDecimal(value),
+      "description" -> Json.fromString(description)
     )
+
     val expected = Json.obj(
-      "date"        -> date,
-      "value"       -> value,
-      "description" -> description
+      "date"        -> Json.fromString(date.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+      "value"       -> Json.obj(
+        "amount"   -> Json.fromBigDecimal(value),
+        "currency" -> Json.fromString("BRL")
+      ),
+      "description" -> Json.fromString(description)
     )
 
-    val gateway    = new InMemoryTransactionRepository[IO]
+    val expectedTransaction = Transaction(
+      TransactionId(nilUUID),
+      TransactionDate(date),
+      TransactionValue(value),
+      TransactionDescription(description)
+    )
+
+    given UUIDGen[IO] with
+      override def randomUUID: IO[UUID] =
+        IO.delay(nilUUID)
+
+    val gateway    = new RegisterTransactionGateway[IO] {
+      override def register(transaction: Transaction): IO[Unit] =
+        IO(assertEquals(transaction, expectedTransaction, "Must receive transaction"))
+    }
     val usecase    = new RegisterTransactionUseCase[IO](gateway)
     val controller = new RegisterTransactionController[IO](usecase)
     val api        = new RegisterTransactionRoute[IO](controller)

@@ -75,7 +75,7 @@ object `spendthrift-application` extends CommonModule {
   override def artifactName = "spendthrift-application"
 
   override def moduleDeps =
-    Seq(`spendthrift-web`)
+    Seq(`spendthrift-adapters`, `spendthrift-web`)
 }
 
 object `spendthrift-commands` extends CommonModule {
@@ -132,7 +132,7 @@ object `spendthrift-presentation` extends CommonModule {
   override def artifactName = "spendthrift-presentation"
 
   override def moduleDeps =
-    Seq(`spendthrift-adapters`)
+    Seq(`spendthrift-commands`, `spendthrift-queries`)
 
   override def ivyDeps =
     Agg(
