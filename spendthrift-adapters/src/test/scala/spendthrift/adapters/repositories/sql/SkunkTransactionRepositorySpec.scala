@@ -1,17 +1,20 @@
 package spendthrift.adapters.repositories.sql
 
 import cats.implicits.*
+
 import cats.effect.*
+
+import skunk.*
+import skunk.codec.all.*
+import skunk.implicits.*
+
+import squants.market.*
 
 import munit.*
 
 import spendthrift.domain.entities.{ transactions => d }
 
-import skunk.*
-import skunk.implicits.*
-import skunk.codec.all.*
 import java.time.*
-import squants.market.*
 
 final class SkunkTransactionRepositorySpec extends SqlSuite {
 
