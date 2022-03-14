@@ -3,6 +3,9 @@ import mill.scalalib._
 
 import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
 
+import $ivy.`com.lihaoyi::mill-contrib-flyway:$MILL_VERSION`
+import mill.contrib.flyway.FlywayModule
+
 import $ivy.`com.goyeau::mill-scalafix_mill0.10:0.2.8`
 import com.goyeau.mill.scalafix.StyleModule
 
@@ -28,8 +31,12 @@ private object Versions {
   // Http
   val http4s = "0.23.10"
 
+  // Database
+  val skunk      = "0.3.1"
+  val postgresql = "42.3.3"
+
   // Testing
-  val munit           = "0.7.29"
+  val munit           = "1.0.0-M2"
   val munitCatsEffect = "1.0.7"
 
   // Scalafix
@@ -58,6 +65,22 @@ object project extends Module {
   }
 }
 
+object spendthrift extends FlywayModule {
+
+  override def flywayUrl      = T.input(T.ctx.env.getOrElse[String]("FLYWAY_URL", "jdbc:postgresql://localhost/spendthrift"))
+  override def flywayUser     = T.input(T.ctx.env.getOrElse[String]("FLYWAY_USER", "spendthrift"))
+  override def flywayPassword = T.input(T.ctx.env.getOrElse[String]("FLYWAY_PASSWORD", "spendthrift@dev"))
+
+  override def flywayDriverDeps =
+    Agg(
+      ivy"org.postgresql:postgresql:${Versions.postgresql}"
+    )
+
+  override def flywayFileLocations = T {
+    `spendthrift-adapters`.resources().map(pr => PathRef(pr.path / "db" / "migration", pr.quick))
+  }
+}
+
 object `spendthrift-adapters` extends CommonModule {
 
   object test extends CommonTestModule
@@ -66,6 +89,12 @@ object `spendthrift-adapters` extends CommonModule {
 
   override def moduleDeps =
     Seq(`spendthrift-commands`, `spendthrift-queries`)
+
+  override def ivyDeps =
+    Agg(
+      ivy"org.tpolecat::skunk-core::${Versions.skunk}",
+      ivy"org.tpolecat::skunk-circe::${Versions.skunk}"
+    )
 }
 
 object `spendthrift-application` extends CommonModule {
