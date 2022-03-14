@@ -35,6 +35,10 @@ private object Versions {
   val skunk      = "0.3.1"
   val postgresql = "42.3.3"
 
+  // Logging
+  val log4cats = "2.2.0"
+  val log4j    = "2.17.2"
+
   // Testing
   val munit           = "1.0.0-M2"
   val munitCatsEffect = "1.0.7"
@@ -105,6 +109,13 @@ object `spendthrift-application` extends CommonModule {
 
   override def moduleDeps =
     Seq(`spendthrift-adapters`, `spendthrift-web`)
+
+  override def runIvyDeps =
+    Agg(
+      ivy"org.apache.logging.log4j:log4j-api:${Versions.log4j}",
+      ivy"org.apache.logging.log4j:log4j-core:${Versions.log4j}",
+      ivy"org.apache.logging.log4j:log4j-slf4j-impl:${Versions.log4j}"
+    )
 }
 
 object `spendthrift-commands` extends CommonModule {
@@ -150,7 +161,8 @@ object `spendthrift-effects` extends CommonModule {
 
   override def ivyDeps =
     Agg(
-      ivy"org.typelevel::cats-effect::${Versions.catsEffect}"
+      ivy"org.typelevel::cats-effect::${Versions.catsEffect}",
+      ivy"org.typelevel::log4cats-slf4j::${Versions.log4cats}"
     )
 }
 

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" strict="true" xmlns="http://logging.apache.org/log4j/2.0/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config 
+https://raw.githubusercontent.com/apache/logging-log4j2/master/log4j-core/src/main/resources/Log4j-config.xsd">
+
+  <!-- Properties -->
+  <Properties>
+    <Property name="LEVEL_PATTERN">%highlight{%5p}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue}</Property>
+    <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} - ${LEVEL_PATTERN} [%15.15t] %style{%c}{cyan}: %m%n%rEx</Property>
+    <Property name="ROOT_LOG_LEVEL">${env:ROOT_LOG_LEVEL:-INFO}</Property>
+    <Property name="LOG_LEVEL">${env:LOG_LEVEL:-DEBUG}</Property>
+  </Properties>
+
+  <!-- Appenders -->
+  <Appenders>
+    <Console name="STD_OUT" target="SYSTEM_OUT" follow="true">
+      <PatternLayout pattern="${LOG_PATTERN}" noConsoleNoAnsi="true" />
+    </Console>
+
+    <Async name="ASYNC_STD_OUT">
+      <AppenderRef ref="STD_OUT" />
+    </Async>
+  </Appenders>
+
+  <!-- Loggers -->
+  <Loggers>
+    <Logger name="spendthrift" level="${LOG_LEVEL}" additivity="false" includeLocation="true">
+      <AppenderRef ref="ASYNC_STD_OUT" />
+    </Logger>
+
+    <Root level="${ROOT_LOG_LEVEL}" includeLocation="true">
+      <AppenderRef ref="ASYNC_STD_OUT" />
+    </Root>
+  </Loggers>
+</Configuration>
