@@ -4,12 +4,21 @@ import cats.implicits.*
 
 import cats.effect.*
 
+import skunk.*
+
 import spendthrift.application.modules.repositories.*
 
 object Repositories:
-  def make[F[_]: Sync]: F[Repositories[F]] =
+  def makeInMemory[F[_]: Sync]: F[Repositories[F]] =
     for {
-      transactionRepository <- TransactionRepository.make[F]
+      transactionRepository <- TransactionRepository.makeInMemory[F]
+    } yield new Repositories[F](
+      transactionRepository
+    )
+
+  def makeSkunk[F[_]: Sync](sessionPool: Resource[F, Session[F]]): F[Repositories[F]] =
+    for {
+      transactionRepository <- TransactionRepository.makeSkunk[F](sessionPool)
     } yield new Repositories[F](
       transactionRepository
     )
