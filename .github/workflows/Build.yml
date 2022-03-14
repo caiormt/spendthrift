@@ -72,4 +72,4 @@ jobs:
           FLYWAY_PASSWORD: "spendthrift@dev"
 
       - name: Run Tests
-        run: ./millw all __.test
+        run: ./millw --disable-ticker all __.test
