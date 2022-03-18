@@ -55,6 +55,8 @@ object Resources:
     )
   }
 
+end Resources
+
 final class Resources[F[_]] private (
     val sessionPool: Resource[F, Session[F]],
     val cache: Resources.CacheResources[F]

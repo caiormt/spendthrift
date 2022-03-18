@@ -5,7 +5,10 @@ import cats.effect.*
 import java.util.*
 
 trait UUIDGen[F[_]]:
+
   def randomUUID: F[UUID]
+
+end UUIDGen
 
 object UUIDGen:
 

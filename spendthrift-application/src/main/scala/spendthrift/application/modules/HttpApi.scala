@@ -19,8 +19,11 @@ import spendthrift.web.routes.healthcheck.*
 import scala.concurrent.duration.*
 
 object HttpApi:
+
   def make[F[_]: Async](controllers: Controllers[F]): F[HttpApi[F]] =
     Sync[F].delay(new HttpApi[F](controllers))
+
+end HttpApi
 
 final class HttpApi[F[_]: Async](controllers: Controllers[F]):
 

@@ -9,6 +9,7 @@ import skunk.*
 import spendthrift.application.modules.repositories.*
 
 object Repositories:
+
   def makeInMemory[F[_]: Sync]: F[Repositories[F]] =
     for {
       transactionRepository <- TransactionRepository.makeInMemory[F]
@@ -22,6 +23,8 @@ object Repositories:
     } yield new Repositories[F](
       transactionRepository
     )
+
+end Repositories
 
 final class Repositories[F[_]] private (
     val transactionRepository: TransactionRepository[F]

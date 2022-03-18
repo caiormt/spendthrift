@@ -12,9 +12,10 @@ import spendthrift.adapters.repositories.inmemory.*
 import spendthrift.adapters.repositories.sql.*
 
 object TransactionRepository:
+
   def makeInMemory[F[_]: Sync]: F[TransactionRepository[F]] =
     for {
-      inMemoryTransactionRepository <- Sync[F].delay(new InMemoryTransactionRepository[F])
+      inMemoryTransactionRepository <- InMemoryTransactionRepository.make[F]
     } yield new TransactionRepository[F](
       inMemoryTransactionRepository,
       inMemoryTransactionRepository
@@ -22,11 +23,13 @@ object TransactionRepository:
 
   def makeSkunk[F[_]: Sync](sessionPool: Resource[F, Session[F]]): F[TransactionRepository[F]] =
     for {
-      skunkTransactionRepository <- Sync[F].delay(new SkunkTransactionRepository[F](sessionPool))
+      skunkTransactionRepository <- SkunkTransactionRepository.make[F](sessionPool)
     } yield new TransactionRepository[F](
       skunkTransactionRepository,
       skunkTransactionRepository
     )
+
+end TransactionRepository
 
 final class TransactionRepository[F[_]] private (
     val registerTransactionGateway: RegisterTransactionGateway[F],

@@ -10,8 +10,11 @@ import sup.data.*
 import sup.mods.*
 
 object InMemoryHealthCheck:
+
   def make[F[_]: Sync]: F[InMemoryHealthCheck[F]] =
     Sync[F].delay(new InMemoryHealthCheck[F])
+
+end InMemoryHealthCheck
 
 final class InMemoryHealthCheck[F[_]: Applicative]:
 

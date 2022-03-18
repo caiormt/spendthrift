@@ -18,6 +18,13 @@ import spendthrift.domain.entities.{ transactions => d }
 
 import java.time.*
 
+object SkunkTransactionRepository:
+
+  def make[F[_]: Sync](sessionPool: Resource[F, Session[F]]): F[SkunkTransactionRepository[F]] =
+    Sync[F].delay(new SkunkTransactionRepository[F](sessionPool))
+
+end SkunkTransactionRepository
+
 final class SkunkTransactionRepository[F[_]: Sync](sessionPool: Resource[F, Session[F]])
     extends RegisterTransactionGateway[F]
       with FindTransactionByIdGateway[F]:
@@ -39,6 +46,8 @@ final class SkunkTransactionRepository[F[_]: Sync](sessionPool: Resource[F, Sess
     sessionPool.use { session =>
       session.prepare(FIND_TRANSACTION_BY_ID_QUERY).use(_.option(id))
     }
+
+end SkunkTransactionRepository
 
 object SkunkTransactionSchema:
 

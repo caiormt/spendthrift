@@ -16,8 +16,11 @@ import sup.mods.*
 import scala.concurrent.duration.*
 
 object SkunkHealthCheck:
+
   def make[F[_]: Async](sessionPool: Resource[F, Session[F]]): F[SkunkHealthCheck[F]] =
     Sync[F].delay(new SkunkHealthCheck[F](sessionPool))
+
+end SkunkHealthCheck
 
 final class SkunkHealthCheck[F[_]: Temporal](sessionPool: Resource[F, Session[F]]):
 

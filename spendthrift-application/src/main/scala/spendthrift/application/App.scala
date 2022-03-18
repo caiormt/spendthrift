@@ -57,6 +57,7 @@ object App extends IOApp.Simple:
   def healthReporter[F[_]: Async](resources: Resources[F]): F[HealthReporter[F, NonEmptyList, Tagged[String, *]]] = {
     import resources.*
     import cache.*
+
     for {
       repositoryHealthCheck <- SkunkHealthCheck.make[F](sessionPool)
       healthReporter        <- Sync[F].delay {

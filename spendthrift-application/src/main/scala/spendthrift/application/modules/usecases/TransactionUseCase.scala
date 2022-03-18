@@ -12,17 +12,20 @@ import spendthrift.commands.usecases.transaction.*
 import spendthrift.queries.usecases.transaction.*
 
 object TransactionUseCase:
+
   def make[F[_]: Sync](repositories: TransactionRepository[F]): F[TransactionUseCase[F]] = {
     import repositories.*
 
     for {
-      registerTransactionUseCase <- Sync[F].delay(new RegisterTransactionUseCase[F](registerTransactionGateway))
-      findTransactionByIdUseCase <- Sync[F].delay(new FindTransactionByIdUseCase[F](findTransactionByIdGateway))
+      registerTransactionUseCase <- RegisterTransactionUseCase.make[F](registerTransactionGateway)
+      findTransactionByIdUseCase <- FindTransactionByIdUseCase.make[F](findTransactionByIdGateway)
     } yield new TransactionUseCase[F](
       registerTransactionUseCase,
       findTransactionByIdUseCase
     )
   }
+
+end TransactionUseCase
 
 final class TransactionUseCase[F[_]] private (
     val registerTransactionUseCase: RegisterTransactionUseCase[F],

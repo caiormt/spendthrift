@@ -30,6 +30,8 @@ object Controllers:
     )
   }
 
+end Controllers
+
 final class Controllers[F[_]] private (
     val healthCheckController: HealthCheckController[F, NonEmptyList, Tagged[String, *]],
     val transactionController: TransactionController[F]

@@ -10,17 +10,20 @@ import spendthrift.application.modules.usecases.*
 import spendthrift.presentation.controllers.transaction.*
 
 object TransactionController:
+
   def make[F[_]: Sync](usecases: TransactionUseCase[F]): F[TransactionController[F]] = {
     import usecases.*
 
     for {
-      registerTransactionController <- Sync[F].delay(new RegisterTransactionController[F](registerTransactionUseCase))
-      findTransactionByIdController <- Sync[F].delay(new FindTransactionByIdController[F](findTransactionByIdUseCase))
+      registerTransactionController <- RegisterTransactionController.make[F](registerTransactionUseCase)
+      findTransactionByIdController <- FindTransactionByIdController.make[F](findTransactionByIdUseCase)
     } yield new TransactionController[F](
       registerTransactionController,
       findTransactionByIdController
     )
   }
+
+end TransactionController
 
 final class TransactionController[F[_]] private (
     val registerTransactionController: RegisterTransactionController[F],
