@@ -13,12 +13,6 @@ import scala.collection.concurrent.*
 object InMemoryTransactionRepository:
   final private lazy val database = TrieMap.empty[TransactionId, Transaction]
 
-  def clear(): Unit =
-    database.clear()
-
-  def save(transaction: Transaction): Unit =
-    database.put(transaction.id, transaction)
-
 final class InMemoryTransactionRepository[F[_]: Sync]
     extends RegisterTransactionGateway[F]
       with FindTransactionByIdGateway[F]:

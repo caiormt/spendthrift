@@ -1,5 +1,6 @@
 package spendthrift.application.modules
 
+import cats.data.*
 import cats.implicits.*
 
 import cats.effect.*
@@ -8,7 +9,12 @@ import org.http4s.*
 import org.http4s.implicits.*
 import org.http4s.server.middleware.*
 
+import sup.data.*
+import sup.modules.circe.given
+
 import spendthrift.application.http.*
+
+import spendthrift.web.routes.healthcheck.*
 
 import scala.concurrent.duration.*
 
@@ -20,11 +26,12 @@ final class HttpApi[F[_]: Async](controllers: Controllers[F]):
 
   import controllers.*
 
-  private val transactionRoutes = new TransactionRoutes[F](transactionController).routes
+  private val healthCheckRoutes = new HealthCheckRoute(healthCheckController).routes
+  private val transactionRoutes = new TransactionRoutes(transactionController).routes
 
   // Combining all the open http routes
   private val openRoutes: HttpRoutes[F] =
-    transactionRoutes
+    healthCheckRoutes <+> transactionRoutes
 
   // Combining all routes
   private val routes: HttpRoutes[F] =

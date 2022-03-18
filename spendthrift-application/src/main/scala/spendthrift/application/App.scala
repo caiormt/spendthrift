@@ -1,5 +1,6 @@
 package spendthrift.application
 
+import cats.data.*
 import cats.implicits.*
 
 import cats.effect.*
@@ -11,8 +12,16 @@ import org.http4s.ember.server.*
 import org.http4s.server.*
 
 import com.comcast.ip4s.*
+import sup.*
+import sup.data.*
+
+import spendthrift.effect.extensions.sup.*
+
+import spendthrift.adapters.repositories.sql.*
 
 import spendthrift.application.modules.*
+
+import scala.concurrent.duration.*
 
 object App extends IOApp.Simple:
 
@@ -38,10 +47,26 @@ object App extends IOApp.Simple:
 
   def api[F[_]: Async: Network: Console](resources: Resources[F]): F[HttpApi[F]] =
     for {
-      repositories <- Repositories.makeSkunk[F](resources.sessionPool)
-      useCases     <- UseCases.make[F](repositories)
-      controllers  <- Controllers.make[F](useCases)
-      api          <- HttpApi.make[F](controllers)
+      repositories   <- Repositories.makeSkunk[F](resources.sessionPool)
+      healthReporter <- healthReporter[F](resources)
+      useCases       <- UseCases.make[F](repositories)
+      controllers    <- Controllers.make[F](useCases, healthReporter)
+      api            <- HttpApi.make[F](controllers)
     } yield api
+
+  def healthReporter[F[_]: Async](resources: Resources[F]): F[HealthReporter[F, NonEmptyList, Tagged[String, *]]] = {
+    import resources.*
+    import cache.*
+    for {
+      repositoryHealthCheck <- SkunkHealthCheck.make[F](sessionPool)
+      healthReporter        <- Sync[F].delay {
+                                 HealthReporter.fromChecks(
+                                   repositoryHealthCheck.healthcheck.through(
+                                     cached("repository", 10.seconds.some)(healthCheck)
+                                   )
+                                 )
+                               }
+    } yield healthReporter
+  }
 
 end App

@@ -39,6 +39,12 @@ private object Versions {
   val log4cats = "2.2.0"
   val log4j    = "2.17.2"
 
+  // Healthcheck
+  val sup = "0.9.0-M6"
+
+  // Caching
+  val mules = "0.5.0"
+
   // Testing
   val munit           = "1.0.0-M2"
   val munitCatsEffect = "1.0.7"
@@ -110,6 +116,11 @@ object `spendthrift-application` extends CommonModule {
   override def moduleDeps =
     Seq(`spendthrift-adapters`, `spendthrift-web`)
 
+  override def ivyDeps =
+    Agg(
+      ivy"io.chrisdavenport::mules-caffeine::${Versions.mules}"
+    )
+
   override def runIvyDeps =
     Agg(
       ivy"org.apache.logging.log4j:log4j-api:${Versions.log4j}",
@@ -162,7 +173,9 @@ object `spendthrift-effects` extends CommonModule {
   override def ivyDeps =
     Agg(
       ivy"org.typelevel::cats-effect::${Versions.catsEffect}",
-      ivy"org.typelevel::log4cats-slf4j::${Versions.log4cats}"
+      ivy"org.typelevel::log4cats-slf4j::${Versions.log4cats}",
+      ivy"com.kubukoz::sup-core::${Versions.sup}",
+      ivy"io.chrisdavenport::mules::${Versions.mules}"
     )
 }
 
@@ -179,7 +192,8 @@ object `spendthrift-presentation` extends CommonModule {
     Agg(
       ivy"io.circe::circe-core::${Versions.circe}",
       ivy"io.circe::circe-generic::${Versions.circe}",
-      ivy"io.circe::circe-parser::${Versions.circe}"
+      ivy"io.circe::circe-parser::${Versions.circe}",
+      ivy"com.kubukoz::sup-circe::${Versions.sup}"
     )
 }
 
