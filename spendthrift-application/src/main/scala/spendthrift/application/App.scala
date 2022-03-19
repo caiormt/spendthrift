@@ -11,6 +11,9 @@ import fs2.io.net.*
 import org.http4s.ember.server.*
 import org.http4s.server.*
 
+import org.typelevel.log4cats.*
+import org.typelevel.log4cats.slf4j.*
+
 import com.comcast.ip4s.*
 import sup.*
 import sup.data.*
@@ -19,6 +22,7 @@ import spendthrift.effect.extensions.sup.*
 
 import spendthrift.adapters.repositories.sql.*
 
+import spendthrift.application.config.data.*
 import spendthrift.application.modules.*
 
 import scala.concurrent.duration.*
@@ -29,19 +33,26 @@ object App extends IOApp.Simple:
     application[IO].as(ExitCode.Success)
 
   def application[F[_]: Async: Network: Console]: F[Unit] =
-    Resources
-      .make[F]
-      .evalMap(api[F])
-      .flatMap(server[F])
-      .useForever
-      .void
+    Slf4jLogger.create[F].flatMap { logger =>
+      appConfig
+        .load[F]
+        .flatTap(config => logger.info(show"Loaded configurations: $config"))
+        .flatMap { config =>
+          Resources
+            .make[F](config)
+            .evalMap(api[F])
+            .flatMap(server[F](config.http))
+            .useForever
+            .void
+        }
+    }
 
-  def server[F[_]: Async](api: HttpApi[F]): Resource[F, Server] =
+  def server[F[_]: Async](config: HttpConfig)(api: HttpApi[F]): Resource[F, Server] =
     EmberServerBuilder
       .default[F]
       .withHttp2
-      .withHost(ipv4"0.0.0.0")
-      .withPort(port"8081")
+      .withHost(config.host)
+      .withPort(config.port)
       .withHttpApp(api.httpApp)
       .build
 

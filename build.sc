@@ -45,6 +45,9 @@ private object Versions {
   // Caching
   val mules = "0.5.0"
 
+  // Configuration
+  val ciris      = "2.3.2"
+
   // Testing
   val munit           = "1.0.0-M2"
   val munitCatsEffect = "1.0.7"
@@ -118,7 +121,8 @@ object `spendthrift-application` extends CommonModule {
 
   override def ivyDeps =
     Agg(
-      ivy"io.chrisdavenport::mules-caffeine::${Versions.mules}"
+      ivy"io.chrisdavenport::mules-caffeine::${Versions.mules}",
+      ivy"is.cir::ciris::${Versions.ciris}"
     )
 
   override def runIvyDeps =

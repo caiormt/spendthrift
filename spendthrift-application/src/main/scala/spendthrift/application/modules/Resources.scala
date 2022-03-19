@@ -18,6 +18,8 @@ import skunk.util.*
 import sup.*
 import sup.data.*
 
+import spendthrift.application.config.data.*
+
 import scala.concurrent.duration.*
 
 object Resources:
@@ -25,14 +27,14 @@ object Resources:
       val healthCheck: MemoryCache[F, String, HealthResult[Tagged[String, *]]]
   )
 
-  def make[F[_]: Async: Network: Console]: Resource[F, Resources[F]] = {
-    def makeDatabase: SessionPool[F] =
+  def make[F[_]: Async: Network: Console](config: AppConfig): Resource[F, Resources[F]] = {
+    def makeDatabase(config: DatabaseConfig): SessionPool[F] =
       Session.pooled(
-        host = "127.0.0.1",
-        user = "spendthrift",
-        database = "spendthrift",
-        password = "spendthrift@dev".some,
-        max = 3
+        host = config.host,
+        user = config.username,
+        database = config.database,
+        password = config.password.map(_.value),
+        max = config.max
       )
 
     def makeCaches: Resource[F, CacheResources[F]] =
@@ -47,7 +49,7 @@ object Resources:
       )
 
     for {
-      sessionPool <- makeDatabase
+      sessionPool <- makeDatabase(config.database)
       caches      <- makeCaches
     } yield new Resources[F](
       sessionPool,
