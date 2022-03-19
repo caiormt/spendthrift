@@ -1,5 +1,31 @@
 version: "3.7"
 services:
+  Spendthrift:
+    restart: always
+    image: spendthrift
+    ports:
+      - 8081:8081
+    environment:
+      - DATABASE_HOST=PostgreSQL
+      - DATABASE_PORT=5432
+      - DATABASE_USERNAME=spendthrift
+      - DATABASE_NAME=spendthrift
+      - DATABASE_PASSWORD=spendthrift@dev
+      - DATABASE_MAX_CONNECTIONS=4
+      - HTTP_SERVER_HOST=0.0.0.0
+      - HTTP_SERVER_PORT=8081
+    networks:
+      - postgres-network
+    depends_on:
+      PostgreSQL:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --output-document=/dev/null http://localhost:8081/health || exit 1
+      start_period: 10s
+      interval: 5s
+      timeout: 1s
+      retries: 5
+
   PostgreSQL:
     restart: always
     image: postgres:14-alpine
@@ -40,8 +66,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - postgres-network
 
 volumes:
   admin-data:

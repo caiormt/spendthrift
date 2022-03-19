@@ -6,6 +6,9 @@ import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
 import $ivy.`com.lihaoyi::mill-contrib-flyway:$MILL_VERSION`
 import mill.contrib.flyway.FlywayModule
 
+import $ivy.`com.lihaoyi::mill-contrib-docker:$MILL_VERSION`
+import mill.contrib.docker.DockerModule
+
 import $ivy.`com.goyeau::mill-scalafix_mill0.10:0.2.8`
 import com.goyeau.mill.scalafix.StyleModule
 
@@ -46,7 +49,7 @@ private object Versions {
   val mules = "0.5.0"
 
   // Configuration
-  val ciris      = "2.3.2"
+  val ciris = "2.3.2"
 
   // Testing
   val munit           = "1.0.0-M2"
@@ -110,7 +113,16 @@ object `spendthrift-adapters` extends CommonModule {
     )
 }
 
-object `spendthrift-application` extends CommonModule {
+object `spendthrift-application` extends CommonModule with DockerModule {
+
+  object docker extends DockerConfig {
+
+    override def tags = List("spendthrift")
+
+    override def baseImage = "openjdk:17-jdk-alpine"
+
+    override def exposedPorts = Seq(8081)
+  }
 
   object test extends CommonTestModule
 
