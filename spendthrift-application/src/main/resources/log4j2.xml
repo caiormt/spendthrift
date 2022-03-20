@@ -6,8 +6,8 @@ https://raw.githubusercontent.com/apache/logging-log4j2/master/log4j-core/src/ma
   <Properties>
     <Property name="LEVEL_PATTERN">%highlight{%5p}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue}</Property>
     <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} - ${LEVEL_PATTERN} [%15.15t] %style{%c}{cyan}: %m%n%rEx</Property>
-    <Property name="ROOT_LOG_LEVEL">${env:ROOT_LOG_LEVEL:-INFO}</Property>
-    <Property name="LOG_LEVEL">${env:LOG_LEVEL:-DEBUG}</Property>
+    <Property name="ROOT_LOG_LEVEL">${env:APP_ROOT_LOG_LEVEL:-INFO}</Property>
+    <Property name="LOG_LEVEL">${env:APP_LOG_LEVEL:-DEBUG}</Property>
   </Properties>
 
   <!-- Appenders -->
