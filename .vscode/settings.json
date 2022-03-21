@@ -1,5 +1,23 @@
 {
   "files.watcherExclude": {
     "**/target": true
-  }
+  },
+  "metals.serverProperties": [
+    "-server",
+    "-ea",
+    "-Xmx512m",
+    "-Xms512m",
+    "-XX:+IgnoreUnrecognizedVMOptions",
+    "-XX:+UseG1GC",
+    "-XX:SurvivorRatio=6",
+    "-XX:TargetSurvivorRatio=70",
+    "-XX:NewSize=256m",
+    "-XX:MaxNewSize=768m",
+    "-XX:ReservedCodeCacheSize=256m",
+    "-XX:MaxMetaspaceSize=256m",
+    "-XX:+OmitStackTraceInFastThrow",
+    "-XX:SoftRefLRUPolicyMSPerMB=50",
+    "-XX:+AggressiveOpts",
+    "-Dsun.io.useCanonCaches=false"
+  ]
 }
