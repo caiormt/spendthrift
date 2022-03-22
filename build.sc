@@ -51,6 +51,10 @@ private object Versions {
   // Configuration
   val ciris = "2.3.2"
 
+  // Metrics
+  val epimetheus       = "0.5.0-M2"
+  val epimetheusHttp4s = "0.6.0-M2"
+
   // Testing
   val munit           = "1.0.0-M2"
   val munitCatsEffect = "1.0.7"
@@ -191,7 +195,8 @@ object `spendthrift-effects` extends CommonModule {
       ivy"org.typelevel::cats-effect::${Versions.catsEffect}",
       ivy"org.typelevel::log4cats-slf4j::${Versions.log4cats}",
       ivy"com.kubukoz::sup-core::${Versions.sup}",
-      ivy"io.chrisdavenport::mules::${Versions.mules}"
+      ivy"io.chrisdavenport::mules::${Versions.mules}",
+      ivy"io.chrisdavenport::epimetheus::${Versions.epimetheus}"
     )
 }
 
@@ -236,7 +241,8 @@ object `spendthrift-web` extends CommonModule {
     Agg(
       ivy"org.http4s::http4s-dsl::${Versions.http4s}",
       ivy"org.http4s::http4s-ember-server::${Versions.http4s}",
-      ivy"org.http4s::http4s-circe::${Versions.http4s}"
+      ivy"org.http4s::http4s-circe::${Versions.http4s}",
+      ivy"io.chrisdavenport::epimetheus-http4s::${Versions.epimetheusHttp4s}"
     )
 }
 

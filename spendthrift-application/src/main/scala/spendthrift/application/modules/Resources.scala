@@ -22,6 +22,8 @@ import spendthrift.application.config.data.*
 
 import scala.concurrent.duration.*
 
+import io.chrisdavenport.epimetheus.*
+
 object Resources:
   final class CacheResources[F[_]] private[Resources] (
       val healthCheck: MemoryCache[F, String, HealthResult[Tagged[String, *]]]
@@ -48,12 +50,17 @@ object Resources:
         healthCheck
       )
 
+    def makeEpimetheus: Resource[F, CollectorRegistry[F]] =
+      Resource.eval(CollectorRegistry.buildWithDefaults[F])
+
     for {
       sessionPool <- makeDatabase(config.database)
       caches      <- makeCaches
+      epimetheus  <- makeEpimetheus
     } yield new Resources[F](
       sessionPool,
-      caches
+      caches,
+      epimetheus
     )
   }
 
@@ -61,5 +68,9 @@ end Resources
 
 final class Resources[F[_]] private (
     val sessionPool: Resource[F, Session[F]],
-    val cache: Resources.CacheResources[F]
-)
+    val cache: Resources.CacheResources[F],
+    val collectorRegistry: CollectorRegistry[F]
+) {
+
+  given CollectorRegistry[F] = collectorRegistry
+}
