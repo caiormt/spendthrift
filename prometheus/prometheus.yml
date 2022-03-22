@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 30s
+  scrape_timeout: 5s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+       - targets: ['localhost:9090']
+
+  - job_name: spendthrift
+    static_configs:
+       - targets: ['Spendthrift:8081']
+
+  - job_name: postgres
+    static_configs:
+       - targets: ['PostgresExporter:9187']

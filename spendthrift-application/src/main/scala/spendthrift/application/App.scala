@@ -56,7 +56,9 @@ object App extends IOApp.Simple:
       .withHttpApp(api.httpApp)
       .build
 
-  def api[F[_]: Async: Network: Console](resources: Resources[F]): F[HttpApi[F]] =
+  def api[F[_]: Async: Network: Console](resources: Resources[F]): F[HttpApi[F]] = {
+    import resources.given
+
     for {
       repositories   <- Repositories.makeSkunk[F](resources.sessionPool)
       healthReporter <- healthReporter[F](resources)
@@ -64,6 +66,7 @@ object App extends IOApp.Simple:
       controllers    <- Controllers.make[F](useCases, healthReporter)
       api            <- HttpApi.make[F](controllers)
     } yield api
+  }
 
   def healthReporter[F[_]: Async](resources: Resources[F]): F[HealthReporter[F, NonEmptyList, Tagged[String, *]]] = {
     import resources.*

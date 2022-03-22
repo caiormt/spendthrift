@@ -10,6 +10,18 @@ import spendthrift.application.modules.controllers.*
 
 import spendthrift.web.routes.transaction.*
 
+object TransactionRoutes:
+
+  private val RESOURCE_PATH_R = "^/transactions".r.unanchored
+
+  def classify(renderdUri: String): Option[String] =
+    renderdUri match {
+      case RESOURCE_PATH_R() => "/transactions".some
+      case _                 => none
+    }
+
+end TransactionRoutes
+
 final class TransactionRoutes[F[_]: Concurrent](controllers: TransactionController[F]):
 
   import controllers.*
