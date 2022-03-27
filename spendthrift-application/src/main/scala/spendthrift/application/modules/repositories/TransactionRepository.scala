@@ -2,7 +2,9 @@ package spendthrift.application.modules.repositories
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import skunk.*
 
@@ -13,7 +15,7 @@ import spendthrift.adapters.repositories.sql.*
 
 object TransactionRepository:
 
-  def makeInMemory[F[_]: Sync]: F[TransactionRepository[F]] =
+  def makeInMemory[F[_]: Sync: Trace]: F[TransactionRepository[F]] =
     for {
       inMemoryTransactionRepository <- InMemoryTransactionRepository.make[F]
     } yield new TransactionRepository[F](
@@ -21,7 +23,7 @@ object TransactionRepository:
       inMemoryTransactionRepository
     )
 
-  def makeSkunk[F[_]: Sync](sessionPool: Resource[F, Session[F]]): F[TransactionRepository[F]] =
+  def makeSkunk[F[_]: Sync: Trace](sessionPool: Resource[F, Session[F]]): F[TransactionRepository[F]] =
     for {
       skunkTransactionRepository <- SkunkTransactionRepository.make[F](sessionPool)
     } yield new TransactionRepository[F](

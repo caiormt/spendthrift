@@ -4,6 +4,8 @@ import cats.implicits.*
 
 import cats.effect.*
 
+import natchez.Trace.Implicits.noop
+
 import squants.market.*
 
 import munit.*

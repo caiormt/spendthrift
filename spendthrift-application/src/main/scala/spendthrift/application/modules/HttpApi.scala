@@ -3,7 +3,13 @@ package spendthrift.application.modules
 import cats.data.*
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import io.chrisdavenport.epimetheus.*
+import io.chrisdavenport.epimetheus.http4s.*
+
+import natchez.*
+import natchez.http4s.*
 
 import org.http4s.*
 import org.http4s.implicits.*
@@ -19,12 +25,9 @@ import spendthrift.web.routes.healthcheck.*
 
 import scala.concurrent.duration.*
 
-import io.chrisdavenport.epimetheus.*
-import io.chrisdavenport.epimetheus.http4s.*
-
 object HttpApi:
 
-  def make[F[_]: Async: CollectorRegistry](controllers: Controllers[F]): F[HttpApi[F]] =
+  def make[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F]): F[HttpApi[F]] =
     EpimetheusOps
       .register[F](summon[CollectorRegistry[F]], Name("server"))
       .map(meteredRoutes[F])
@@ -40,7 +43,7 @@ object HttpApi:
 
 end HttpApi
 
-final class HttpApi[F[_]: Async: CollectorRegistry](controllers: Controllers[F])(
+final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F])(
     meteredRoutes: HttpRoutes[F] => HttpRoutes[F]
 ):
 
@@ -55,7 +58,7 @@ final class HttpApi[F[_]: Async: CollectorRegistry](controllers: Controllers[F])
 
   // Custom Middlewares
   // format: off
-  private val logging: HttpRoutes[F] => HttpRoutes[F] = {
+  private val infrastructureMiddleware: HttpRoutes[F] => HttpRoutes[F] = {
     { 
       (http: HttpRoutes[F]) => RequestLogger.httpRoutes(logHeaders = true, logBody = false)(http)
     } andThen { 
@@ -63,26 +66,30 @@ final class HttpApi[F[_]: Async: CollectorRegistry](controllers: Controllers[F])
     }
   }
 
-  private val appLogging: HttpRoutes[F] => HttpRoutes[F] = {
+  private val applicationMiddleware: HttpRoutes[F] => HttpRoutes[F] = {
     { 
       (http: HttpRoutes[F]) => RequestLogger.httpRoutes(logHeaders = true, logBody = true)(http)
     } andThen { 
       (http: HttpRoutes[F]) => ResponseLogger.httpRoutes(logHeaders = true, logBody = true)(http)
+    } andThen {
+      (http: HttpRoutes[F]) => meteredRoutes(http)
+    } andThen {
+      (http: HttpRoutes[F]) => NatchezMiddleware.server[F](http)
     }
   }
   // format: on
 
   // Combining all the infrastructure routes
   private val infrastructureRoutes: HttpRoutes[F] =
-    logging(healthCheckRoutes <+> metricsRoutes)
+    healthCheckRoutes <+> metricsRoutes
 
   // Combining all the application routes
   private val applicationRoutes: HttpRoutes[F] =
-    appLogging(meteredRoutes(transactionRoutes))
+    transactionRoutes
 
   // Combining all routes
   private val routes: HttpRoutes[F] =
-    infrastructureRoutes <+> applicationRoutes
+    infrastructureMiddleware(infrastructureRoutes) <+> applicationMiddleware(applicationRoutes)
 
   // Generic Middleware
   // format: off
@@ -97,6 +104,6 @@ final class HttpApi[F[_]: Async: CollectorRegistry](controllers: Controllers[F])
   }
   // format: on
 
-  final val httpApp: HttpApp[F] = middleware(routes).orNotFound
+  final val httpRoutes: HttpRoutes[F] = middleware(routes)
 
 end HttpApi

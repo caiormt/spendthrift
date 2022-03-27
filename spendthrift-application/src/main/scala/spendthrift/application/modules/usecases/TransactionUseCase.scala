@@ -2,7 +2,9 @@ package spendthrift.application.modules.usecases
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import spendthrift.application.modules.*
 import spendthrift.application.modules.repositories.*
@@ -13,7 +15,7 @@ import spendthrift.queries.usecases.transaction.*
 
 object TransactionUseCase:
 
-  def make[F[_]: Sync](repositories: TransactionRepository[F]): F[TransactionUseCase[F]] = {
+  def make[F[_]: Sync: Trace](repositories: TransactionRepository[F]): F[TransactionUseCase[F]] = {
     import repositories.*
 
     for {

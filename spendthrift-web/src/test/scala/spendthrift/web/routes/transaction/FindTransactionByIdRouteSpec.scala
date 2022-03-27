@@ -7,6 +7,8 @@ import cats.effect.*
 
 import io.circe.*
 
+import natchez.Trace.Implicits.noop
+
 import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.implicits.*

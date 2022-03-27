@@ -7,6 +7,7 @@ import cats.effect.std.*
 
 import fs2.io.net.*
 
+import io.chrisdavenport.epimetheus.*
 import io.chrisdavenport.mules.*
 
 import natchez.Trace.Implicits.noop
@@ -21,8 +22,6 @@ import sup.data.*
 import spendthrift.application.config.data.*
 
 import scala.concurrent.duration.*
-
-import io.chrisdavenport.epimetheus.*
 
 object Resources:
   final class CacheResources[F[_]] private[Resources] (
