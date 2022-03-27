@@ -2,7 +2,9 @@ package spendthrift.application.http
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import org.http4s.*
 
@@ -22,7 +24,7 @@ object TransactionRoutes:
 
 end TransactionRoutes
 
-final class TransactionRoutes[F[_]: Concurrent](controllers: TransactionController[F]):
+final class TransactionRoutes[F[_]: Concurrent: Trace](controllers: TransactionController[F]):
 
   import controllers.*
 

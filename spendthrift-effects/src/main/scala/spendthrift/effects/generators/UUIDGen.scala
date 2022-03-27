@@ -14,7 +14,7 @@ object UUIDGen:
 
   given syncUUIDGen[F[_]: Sync]: UUIDGen[F] with
     override def randomUUID: F[UUID] =
-      Sync[F].delay(UUID.randomUUID)
+      Sync[F].blocking(UUID.randomUUID)
 
   def apply[F[_]](using ev: UUIDGen[F]): UUIDGen[F] = ev
 

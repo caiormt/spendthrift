@@ -2,7 +2,9 @@ package spendthrift.adapters.repositories.sql
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import skunk.*
 import skunk.codec.all.*
@@ -20,12 +22,12 @@ import java.time.*
 
 object SkunkTransactionRepository:
 
-  def make[F[_]: Sync](sessionPool: Resource[F, Session[F]]): F[SkunkTransactionRepository[F]] =
+  def make[F[_]: Sync: Trace](sessionPool: Resource[F, Session[F]]): F[SkunkTransactionRepository[F]] =
     Sync[F].delay(new SkunkTransactionRepository[F](sessionPool))
 
 end SkunkTransactionRepository
 
-final class SkunkTransactionRepository[F[_]: Sync](sessionPool: Resource[F, Session[F]])
+final class SkunkTransactionRepository[F[_]: Sync: Trace](sessionPool: Resource[F, Session[F]])
     extends RegisterTransactionGateway[F]
       with FindTransactionByIdGateway[F]:
 
@@ -38,13 +40,17 @@ final class SkunkTransactionRepository[F[_]: Sync](sessionPool: Resource[F, Sess
     sql"SELECT id, datetime, amount, currency, description FROM #$tableName WHERE id = $id".query(codec)
 
   override def register(transaction: d.Transaction): F[Unit] =
-    sessionPool.use { session =>
-      session.prepare(INSERT_TRANSACTION_COMMAND).use(_.execute(transaction)).void
+    Trace[F].span("repository.transaction.register") {
+      sessionPool.use { session =>
+        session.prepare(INSERT_TRANSACTION_COMMAND).use(_.execute(transaction)).void
+      }
     }
 
   override def findById(id: d.TransactionId): F[Option[d.Transaction]] =
-    sessionPool.use { session =>
-      session.prepare(FIND_TRANSACTION_BY_ID_QUERY).use(_.option(id))
+    Trace[F].span("repository.transaction.find-by-id") {
+      sessionPool.use { session =>
+        session.prepare(FIND_TRANSACTION_BY_ID_QUERY).use(_.option(id))
+      }
     }
 
 end SkunkTransactionRepository

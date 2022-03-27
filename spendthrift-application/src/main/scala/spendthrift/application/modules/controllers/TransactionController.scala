@@ -2,7 +2,9 @@ package spendthrift.application.modules.controllers
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import spendthrift.application.modules.*
 import spendthrift.application.modules.usecases.*
@@ -11,7 +13,7 @@ import spendthrift.presentation.controllers.transaction.*
 
 object TransactionController:
 
-  def make[F[_]: Sync](usecases: TransactionUseCase[F]): F[TransactionController[F]] = {
+  def make[F[_]: Sync: Trace](usecases: TransactionUseCase[F]): F[TransactionController[F]] = {
     import usecases.*
 
     for {

@@ -4,6 +4,8 @@ import cats.implicits.*
 
 import cats.effect.*
 
+import natchez.Trace.Implicits.noop
+
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
@@ -15,6 +17,7 @@ import munit.*
 import spendthrift.domain.entities.{ transactions => d }
 
 import java.time.*
+import java.time.temporal.ChronoUnit.*
 
 final class SkunkTransactionRepositorySpec extends SqlSuite {
 
@@ -47,7 +50,7 @@ final class SkunkTransactionRepositorySpec extends SqlSuite {
         fail("Should retrieve persisted transaction")
       case Some(id ~ datetime ~ amount ~ currency ~ description) =>
         assertEquals(id, txId)
-        assertEquals(datetime, txDate.withZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime)
+        assertEquals(datetime, txDate.withZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime.truncatedTo(MICROS))
         assertEquals(amount, txAmount)
         assertEquals(currency, txCurrency.code)
         assertEquals(description, txDescription)
@@ -71,7 +74,7 @@ final class SkunkTransactionRepositorySpec extends SqlSuite {
 
     val expected = d.Transaction(
       d.TransactionId(txId),
-      d.TransactionDate(txDate),
+      d.TransactionDate(txDate.truncatedTo(MICROS)),
       d.TransactionValue(Money(txAmount, txCurrency)),
       d.TransactionDescription(txDescription)
     )

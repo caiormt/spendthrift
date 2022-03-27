@@ -2,13 +2,15 @@ package spendthrift.application.modules
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import spendthrift.application.modules.usecases.*
 
 object UseCases:
 
-  def make[F[_]: Sync](repositories: Repositories[F]): F[UseCases[F]] = {
+  def make[F[_]: Sync: Trace](repositories: Repositories[F]): F[UseCases[F]] = {
     import repositories.*
 
     for {

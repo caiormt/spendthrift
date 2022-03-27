@@ -3,7 +3,9 @@ package spendthrift.application.modules
 import cats.data.*
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import sup.*
 import sup.data.*
@@ -15,7 +17,7 @@ import spendthrift.presentation.controllers.healthcheck.*
 
 object Controllers:
 
-  def make[F[_]: Sync](
+  def make[F[_]: Sync: Trace](
       usecases: UseCases[F],
       reporter: HealthReporter[F, NonEmptyList, Tagged[String, *]]
   ): F[Controllers[F]] = {

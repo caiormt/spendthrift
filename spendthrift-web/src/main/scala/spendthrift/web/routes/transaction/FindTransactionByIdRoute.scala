@@ -3,7 +3,9 @@ package spendthrift.web.routes.transaction
 import cats.*
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
+
+import natchez.*
 
 import org.http4s.*
 import org.http4s.circe.*
@@ -16,13 +18,15 @@ import spendthrift.presentation.views.findtransactionsbyid.*
 
 import spendthrift.web.codec.{ *, given }
 
-final class FindTransactionByIdRoute[F[_]: MonadThrow](controller: FindTransactionByIdController[F])
+final class FindTransactionByIdRoute[F[_]: MonadThrow: Trace](controller: FindTransactionByIdController[F])
     extends Http4sDsl[F]:
 
   final val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root / "transactions" / UUIDVar(id) =>
-      controller.run(FindTransactionById(id)).flatMap {
-        case Some(transaction) => Ok(transaction)
-        case None              => NotFound()
+      Trace[F].span("routes.find-transaction-by-id") {
+        controller.run(FindTransactionById(id)).flatMap {
+          case Some(transaction) => Ok(transaction)
+          case None              => NotFound()
+        }
       }
   }

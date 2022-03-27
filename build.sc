@@ -55,6 +55,10 @@ private object Versions {
   val epimetheus       = "0.5.0-M2"
   val epimetheusHttp4s = "0.6.0-M2"
 
+  // Tracing
+  val natchez       = "0.1.6"
+  val natchezHttp4s = "0.3.2"
+
   // Testing
   val munit           = "1.0.0-M2"
   val munitCatsEffect = "1.0.7"
@@ -138,7 +142,8 @@ object `spendthrift-application` extends CommonModule with DockerModule {
   override def ivyDeps =
     Agg(
       ivy"io.chrisdavenport::mules-caffeine::${Versions.mules}",
-      ivy"is.cir::ciris::${Versions.ciris}"
+      ivy"is.cir::ciris::${Versions.ciris}",
+      ivy"org.tpolecat::natchez-jaeger::${Versions.natchez}"
     )
 
   override def runIvyDeps =
@@ -196,7 +201,8 @@ object `spendthrift-effects` extends CommonModule {
       ivy"org.typelevel::log4cats-slf4j::${Versions.log4cats}",
       ivy"com.kubukoz::sup-core::${Versions.sup}",
       ivy"io.chrisdavenport::mules::${Versions.mules}",
-      ivy"io.chrisdavenport::epimetheus::${Versions.epimetheus}"
+      ivy"io.chrisdavenport::epimetheus::${Versions.epimetheus}",
+      ivy"org.tpolecat::natchez-core::${Versions.natchez}"
     )
 }
 
@@ -242,7 +248,8 @@ object `spendthrift-web` extends CommonModule {
       ivy"org.http4s::http4s-dsl::${Versions.http4s}",
       ivy"org.http4s::http4s-ember-server::${Versions.http4s}",
       ivy"org.http4s::http4s-circe::${Versions.http4s}",
-      ivy"io.chrisdavenport::epimetheus-http4s::${Versions.epimetheusHttp4s}"
+      ivy"io.chrisdavenport::epimetheus-http4s::${Versions.epimetheusHttp4s}",
+      ivy"org.tpolecat::natchez-http4s::${Versions.natchezHttp4s}"
     )
 }
 
