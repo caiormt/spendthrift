@@ -20,7 +20,7 @@ private object Versions {
 
   // Core
   val cats       = "2.7.0"
-  val catsEffect = "3.3.6"
+  val catsEffect = "3.3.9"
 
   val catsTime = "0.4.0"
   val kittens  = "3.0.0-M3"
@@ -32,7 +32,7 @@ private object Versions {
   val circe = "0.15.0-M1"
 
   // Http
-  val http4s = "0.23.10"
+  val http4s = "0.23.11"
 
   // Database
   val skunk      = "0.3.1"
@@ -60,7 +60,7 @@ private object Versions {
   val natchezHttp4s = "0.3.2"
 
   // Testing
-  val munit           = "1.0.0-M2"
+  val munit           = "1.0.0-M3"
   val munitCatsEffect = "1.0.7"
 
   // Scalafix
