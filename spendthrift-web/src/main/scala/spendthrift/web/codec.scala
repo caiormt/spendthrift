@@ -26,11 +26,13 @@ object codec:
       val dsl = new Http4sDsl[F] {}
       import dsl._
 
-      Trace[F].span("codec.decodeR") {
-        request.asJsonDecode[A].attempt.flatMap {
-          case Right(a) => f(a)
-          case Left(e)  => BadRequest()
-        }
+      val attempt = Trace[F].span("codec.decodeR") {
+        request.asJsonDecode[A].attempt
+      }
+
+      attempt.flatMap {
+        case Right(a) => f(a)
+        case Left(e)  => BadRequest()
       }
     }
 
