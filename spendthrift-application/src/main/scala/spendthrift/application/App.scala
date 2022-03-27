@@ -6,7 +6,11 @@ import cats.implicits.*
 import cats.effect.std.*
 import cats.effect.{ Trace => _, * }
 
+import com.comcast.ip4s.*
+
 import fs2.io.net.*
+
+import io.jaegertracing.Configuration.*
 
 import natchez.*
 import natchez.http4s.implicits.*
@@ -21,9 +25,6 @@ import org.typelevel.log4cats.slf4j.*
 
 import sup.*
 import sup.data.*
-
-import com.comcast.ip4s.*
-import io.jaegertracing.Configuration.*
 
 import spendthrift.effect.extensions.sup.*
 
