@@ -31,4 +31,12 @@ final class HealthCheckRoute[F[_]: Monad, G[_]: NonEmptyTraverse, H[_]: Reducibl
           case Health.Sick    => ServiceUnavailable(report)
         }
       }
+
+    case HEAD -> Root / "health" =>
+      controller.run.flatMap { report =>
+        report.reduce match {
+          case Health.Healthy => Ok()
+          case Health.Sick    => ServiceUnavailable()
+        }
+      }
   }
