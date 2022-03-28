@@ -5,12 +5,16 @@ global:
 scrape_configs:
   - job_name: prometheus
     static_configs:
-       - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
 
   - job_name: spendthrift
     static_configs:
-       - targets: ['Spendthrift:8081']
+      - targets: ["Spendthrift:8081"]
 
   - job_name: postgres
     static_configs:
-       - targets: ['PostgresExporter:9187']
+      - targets: ["PostgresExporter:9187"]
+
+  - job_name: jaeger
+    static_configs:
+      - targets: ["Jaeger:14269"]
