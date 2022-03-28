@@ -2,7 +2,7 @@ package spendthrift.application.modules
 
 import cats.implicits.*
 
-import cats.effect.*
+import cats.effect.{ Trace => _, * }
 import cats.effect.std.*
 
 import fs2.io.net.*
@@ -10,7 +10,7 @@ import fs2.io.net.*
 import io.chrisdavenport.epimetheus.*
 import io.chrisdavenport.mules.*
 
-import natchez.Trace.Implicits.noop
+import natchez.*
 
 import skunk.*
 import skunk.implicits.*
@@ -28,7 +28,7 @@ object Resources:
       val healthCheck: MemoryCache[F, String, HealthResult[Tagged[String, *]]]
   )
 
-  def make[F[_]: Async: Network: Console](config: AppConfig): Resource[F, Resources[F]] = {
+  def make[F[_]: Async: Network: Console: Trace](config: AppConfig): Resource[F, Resources[F]] = {
     def makeDatabase(config: DatabaseConfig): SessionPool[F] =
       Session.pooled(
         host = config.host,
