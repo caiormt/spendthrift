@@ -43,27 +43,29 @@ object App extends IOApp.Simple:
     application[IO].as(ExitCode.Success)
 
   def application[F[_]: Async: Network: Console]: F[Unit] =
-    Slf4jLogger.create[F].flatMap { logger =>
-      appConfig
-        .load[F]
-        .flatTap(config => logger.info(show"Loaded configurations: $config"))
-        .flatMap { config =>
-          entryPoint[F]
-            .flatMap { entryPoint =>
-              val httpRoutes =
-                Resources
-                  .make[Kleisli[F, Span[F], *]](config)
-                  .evalMap(api[Kleisli[F, Span[F], *]])
-                  .map(_.httpRoutes)
+    config[F].flatMap { config =>
+      entryPoint[F]
+        .flatMap { entryPoint =>
+          type G[A] = Kleisli[F, Span[F], A]
 
-              entryPoint
-                .liftR(httpRoutes)
-                .map(_.orNotFound)
-                .flatMap(server[F](config.http))
-            }
-            .useForever
-            .void
+          val httpRoutes =
+            Resources
+              .make[G](config)
+              .evalMap(api[G])
+              .map(_.httpRoutes)
+
+          entryPoint
+            .liftR(httpRoutes)
+            .map(_.orNotFound)
+            .flatMap(server[F](config.http))
         }
+        .useForever
+        .void
+    }
+
+  def config[F[_]: Async]: F[AppConfig] =
+    Slf4jLogger.create[F].flatMap { logger =>
+      appConfig.load[F].flatTap(config => logger.info(show"Loaded configurations: $config"))
     }
 
   def server[F[_]: Async](config: HttpConfig)(httpApp: HttpApp[F]): Resource[F, Server] =
@@ -89,17 +91,16 @@ object App extends IOApp.Simple:
 
   def healthReporter[F[_]: Async](resources: Resources[F]): F[HealthReporter[F, NonEmptyList, Tagged[String, *]]] = {
     import resources.*
-    import cache.*
 
     for {
-      repositoryHealthCheck <- SkunkHealthCheck.make[F](sessionPool)
-      healthReporter        <- Sync[F].delay {
-                                 HealthReporter.fromChecks(
-                                   repositoryHealthCheck.healthcheck.through(
-                                     cached("repository", 10.seconds.some)(healthCheck)
-                                   )
-                                 )
-                               }
+      repository     <- SkunkHealthCheck.make[F](sessionPool)
+      healthReporter <- Sync[F].delay {
+                          HealthReporter.fromChecks(
+                            repository.healthcheck.through(
+                              cached("repository", 10.seconds.some)(cache.healthCheck)
+                            )
+                          )
+                        }
     } yield healthReporter
   }
 
