@@ -9,6 +9,9 @@ object users:
 
   opaque type UserId = UUID
 
+  object UserId:
+    def apply(id: UUID): UserId = id
+
   // format: off
   final case class User(
       id: UserId
