@@ -127,6 +127,7 @@ services:
       - 14269:14269
       - 9411:9411
     environment:
+      - JAEGER_DISABLED=true
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
     networks:
       - spendthrift-network
