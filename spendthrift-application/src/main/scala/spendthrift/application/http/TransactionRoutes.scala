@@ -16,8 +16,8 @@ object TransactionRoutes:
 
   private val RESOURCE_PATH_R = "^/transactions".r.unanchored
 
-  def classify(renderdUri: String): Option[String] =
-    renderdUri match {
+  def classify(renderedUri: String): Option[String] =
+    renderedUri match {
       case RESOURCE_PATH_R() => "/transactions".some
       case _                 => none
     }
