@@ -14,12 +14,15 @@ import spendthrift.web.routes.user.*
 
 object UserRoutes:
 
-  private val RESOURCE_PATH_R = "^/users".r.unanchored
+  private val RESOURCE_PATH_R =
+    "/users/?".r
 
-  def classify(renderedUri: String): Option[String] =
-    renderedUri match {
-      case RESOURCE_PATH_R() => "/users".some
-      case _                 => none
+  def classify[F[_]: Sync](request: Request[F]): F[Option[String]] =
+    Sync[F].blocking {
+      request.uri.renderString match {
+        case RESOURCE_PATH_R() => "/users".some
+        case _                 => none
+      }
     }
 
 end UserRoutes

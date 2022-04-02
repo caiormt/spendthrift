@@ -35,13 +35,9 @@ object HttpApi:
       }
 
   private def classifierF[F[_]: Sync]: Request[F] => F[Option[String]] = req =>
-    Sync[F].blocking {
-      // format: off
-      val renderedUri = req.uri.renderString
-      TransactionRoutes.classify(renderedUri) orElse
-      UserRoutes.classify(renderedUri)
-      // format: on
-    }
+    OptionT(TransactionRoutes.classify(req))
+      .orElseF(UserRoutes.classify(req))
+      .value
 
 end HttpApi
 
@@ -61,17 +57,17 @@ final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controll
   // Custom Middlewares
   // format: off
   private val infrastructureMiddleware: HttpRoutes[F] => HttpRoutes[F] = {
-    { 
+    {
       (http: HttpRoutes[F]) => RequestLogger.httpRoutes(logHeaders = true, logBody = false)(http)
-    } andThen { 
+    } andThen {
       (http: HttpRoutes[F]) => ResponseLogger.httpRoutes(logHeaders = true, logBody = false)(http)
     }
   }
 
   private val applicationMiddleware: HttpRoutes[F] => HttpRoutes[F] = {
-    { 
+    {
       (http: HttpRoutes[F]) => RequestLogger.httpRoutes(logHeaders = true, logBody = true)(http)
-    } andThen { 
+    } andThen {
       (http: HttpRoutes[F]) => ResponseLogger.httpRoutes(logHeaders = true, logBody = true)(http)
     } andThen {
       (http: HttpRoutes[F]) => Metrics.effect[F](metricsOps, classifierF = classifierF)(http)
