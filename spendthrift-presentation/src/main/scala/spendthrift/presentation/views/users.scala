@@ -13,6 +13,11 @@ object users:
 
   opaque type UserId = UUID
 
+  // format: off
+  extension (id: UserId)
+    def show: String = Show[UUID].show(id)
+  // format: on
+
   extension (u: domain.User)
     def toView: User =
       User(
