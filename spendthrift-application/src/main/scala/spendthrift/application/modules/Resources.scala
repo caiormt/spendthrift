@@ -2,8 +2,8 @@ package spendthrift.application.modules
 
 import cats.implicits.*
 
-import cats.effect.{ Trace => _, * }
 import cats.effect.std.*
+import cats.effect.{ Trace => _, * }
 
 import fs2.io.net.*
 
