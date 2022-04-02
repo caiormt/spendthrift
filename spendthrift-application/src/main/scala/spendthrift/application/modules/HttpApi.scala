@@ -30,17 +30,14 @@ object HttpApi:
   def make[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F]): F[HttpApi[F]] =
     EpimetheusOps
       .register[F](summon[CollectorRegistry[F]], Name("server"))
-      .map(meteredRoutes[F])
-      .flatMap { meteredRoutes =>
-        Sync[F].delay(new HttpApi[F](controllers)(meteredRoutes))
+      .flatMap { metricOps =>
+        Sync[F].delay(new HttpApi[F](controllers)(metricOps))
       }
 
-  private def meteredRoutes[F[_]: Sync](metricOps: MetricsOps[F]): HttpRoutes[F] => HttpRoutes[F] =
-    Metrics.effect[F](metricOps, classifierF = req => classifiers(req.uri.renderString))
-
-  private def classifiers[F[_]: Sync](renderedUri: String): F[Option[String]] =
+  private def classifierF[F[_]: Sync]: Request[F] => F[Option[String]] = req =>
     Sync[F].blocking {
       // format: off
+      val renderedUri = req.uri.renderString
       TransactionRoutes.classify(renderedUri) orElse
       UserRoutes.classify(renderedUri)
       // format: on
@@ -48,10 +45,9 @@ object HttpApi:
 
 end HttpApi
 
-final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F])(
-    meteredRoutes: HttpRoutes[F] => HttpRoutes[F]
-):
+final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F])(metricsOps: MetricsOps[F]):
 
+  import HttpApi.*
   import controllers.*
 
   // Infrastructure Routes
@@ -78,7 +74,7 @@ final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controll
     } andThen { 
       (http: HttpRoutes[F]) => ResponseLogger.httpRoutes(logHeaders = true, logBody = true)(http)
     } andThen {
-      (http: HttpRoutes[F]) => meteredRoutes(http)
+      (http: HttpRoutes[F]) => Metrics.effect[F](metricsOps, classifierF = classifierF)(http)
     } andThen {
       (http: HttpRoutes[F]) => NatchezMiddleware.server[F](http)
     }
