@@ -26,9 +26,11 @@ object Controllers:
     for {
       healthCheckController <- HealthCheckController.make[F, NonEmptyList, Tagged[String, *]](reporter)
       transactionController <- TransactionController.make[F](transactionUseCase)
+      userController        <- UserController.make[F](userUseCase)
     } yield new Controllers[F](
       healthCheckController,
-      transactionController
+      transactionController,
+      userController
     )
   }
 
@@ -36,5 +38,6 @@ end Controllers
 
 final class Controllers[F[_]] private (
     val healthCheckController: HealthCheckController[F, NonEmptyList, Tagged[String, *]],
-    val transactionController: TransactionController[F]
+    val transactionController: TransactionController[F],
+    val userController: UserController[F]
 )

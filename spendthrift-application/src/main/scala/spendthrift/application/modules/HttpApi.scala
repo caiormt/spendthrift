@@ -39,7 +39,12 @@ object HttpApi:
     Metrics.effect[F](metricOps, classifierF = req => classifiers(req.uri.renderString))
 
   private def classifiers[F[_]: Sync](renderedUri: String): F[Option[String]] =
-    Sync[F].blocking(TransactionRoutes.classify(renderedUri))
+    Sync[F].blocking {
+      // format: off
+      TransactionRoutes.classify(renderedUri) orElse
+      UserRoutes.classify(renderedUri)
+      // format: on
+    }
 
 end HttpApi
 
@@ -55,6 +60,7 @@ final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controll
 
   // Application Routes
   private val transactionRoutes = new TransactionRoutes(transactionController).routes
+  private val userRoutes        = new UserRoutes(userController).routes
 
   // Custom Middlewares
   // format: off
@@ -85,7 +91,7 @@ final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controll
 
   // Combining all the application routes
   private val applicationRoutes: HttpRoutes[F] =
-    transactionRoutes
+    transactionRoutes <+> userRoutes
 
   // Combining all routes
   private val routes: HttpRoutes[F] =
