@@ -59,6 +59,9 @@ private object Versions {
   val natchez       = "0.1.6"
   val natchezHttp4s = "0.3.2"
 
+  // Crypto
+  val javaJwt = "3.19.1"
+
   // Testing
   val munit           = "1.0.0-M3"
   val munitCatsEffect = "1.0.7"
@@ -117,7 +120,8 @@ object `spendthrift-adapters` extends CommonModule {
   override def ivyDeps =
     Agg(
       ivy"org.tpolecat::skunk-core::${Versions.skunk}",
-      ivy"org.tpolecat::skunk-circe::${Versions.skunk}"
+      ivy"org.tpolecat::skunk-circe::${Versions.skunk}",
+      ivy"com.auth0:java-jwt:${Versions.javaJwt}"
     )
 }
 
