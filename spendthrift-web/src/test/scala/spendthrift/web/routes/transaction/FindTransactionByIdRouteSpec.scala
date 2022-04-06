@@ -18,6 +18,7 @@ import munit.*
 import spendthrift.ports.*
 
 import spendthrift.domain.entities.transactions.*
+import spendthrift.domain.entities.users.*
 
 import spendthrift.presentation.controllers.transaction.*
 
@@ -41,7 +42,7 @@ final class FindTransactionByIdRouteSpec extends HttpRouteSuite {
     val api        = new FindTransactionByIdRoute[IO](controller)
 
     val response = api.routes.orNotFound.run(
-      Request[IO](Method.GET, uri"/transactions" / nilUUID.toString)
+      AuthedRequest(UserPrincipal(UserId(nilUUID)), Request[IO](Method.GET, uri"/transactions" / nilUUID.toString))
     )
 
     check[Json](response, Status.NotFound)
@@ -79,7 +80,7 @@ final class FindTransactionByIdRouteSpec extends HttpRouteSuite {
     val api        = new FindTransactionByIdRoute[IO](controller)
 
     val response = api.routes.orNotFound.run(
-      Request[IO](Method.GET, uri"/transactions" / nilUUID.toString)
+      AuthedRequest(UserPrincipal(UserId(nilUUID)), Request[IO](Method.GET, uri"/transactions" / nilUUID.toString))
     )
 
     check[Json](response, Status.Ok, expected.some)

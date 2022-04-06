@@ -49,7 +49,7 @@ final class RegisterUserRouteSpec extends HttpRouteSuite {
     val api        = new RegisterUserRoute[IO](controller)
 
     val response = api.routes.orNotFound.run(
-      Request[IO](Method.POST, uri"/users")
+      AuthedRequest(UserPrincipal(UserId(nilUUID)), Request[IO](Method.POST, uri"/users"))
     )
 
     checkAll[Json](response, Status.Created, f = checkLocationHeader(uri"/users"))
