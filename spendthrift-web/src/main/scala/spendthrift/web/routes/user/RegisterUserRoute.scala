@@ -13,6 +13,8 @@ import org.http4s.dsl.*
 import org.http4s.headers.*
 import org.http4s.implicits.*
 
+import spendthrift.domain.entities.users.*
+
 import spendthrift.presentation.controllers.user.*
 import spendthrift.presentation.views.registerusers.*
 
@@ -21,8 +23,8 @@ import spendthrift.web.codec.given
 final class RegisterUserRoute[F[_]: MonadThrow: JsonDecoder: Trace](controller: RegisterUserController[F])
     extends Http4sDsl[F]:
 
-  final val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case POST -> Root / "users" =>
+  final val routes: AuthedRoutes[Principal, F] = AuthedRoutes.of[Principal, F] {
+    case POST -> Root / "users" as user =>
       Trace[F].span("routes.register-user") {
         controller.run(RegisterUser()).flatMap { user =>
           Created(user, Location(uri"/users" / user.id.show))
