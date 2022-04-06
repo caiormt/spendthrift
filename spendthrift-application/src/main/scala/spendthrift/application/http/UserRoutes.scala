@@ -10,6 +10,8 @@ import org.http4s.*
 
 import spendthrift.application.modules.controllers.*
 
+import spendthrift.domain.entities.users.*
+
 import spendthrift.web.routes.user.*
 
 object UserRoutes:
@@ -34,7 +36,7 @@ final class UserRoutes[F[_]: Concurrent: Trace](controllers: UserController[F]):
   private val registerUserRoute =
     new RegisterUserRoute[F](registerUserController).routes
 
-  final val routes: HttpRoutes[F] =
+  final val authedRoutes: AuthedRoutes[Principal, F] =
     registerUserRoute
 
 end UserRoutes

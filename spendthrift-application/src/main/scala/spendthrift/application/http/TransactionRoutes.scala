@@ -10,6 +10,8 @@ import org.http4s.*
 
 import spendthrift.application.modules.controllers.*
 
+import spendthrift.domain.entities.users.*
+
 import spendthrift.web.routes.transaction.*
 
 object TransactionRoutes:
@@ -41,7 +43,7 @@ final class TransactionRoutes[F[_]: Concurrent: Trace](controllers: TransactionC
   private val findTransactionByIdRoute =
     new FindTransactionByIdRoute[F](findTransactionByIdController).routes
 
-  final val routes: HttpRoutes[F] =
+  final val authedRoutes: AuthedRoutes[Principal, F] =
     registerTransactionRoute <+> findTransactionByIdRoute
 
 end TransactionRoutes
