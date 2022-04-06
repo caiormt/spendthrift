@@ -36,4 +36,19 @@ object codec:
       }
     }
 
+  extension [F[_]: JsonDecoder: MonadThrow: Trace, A](contextRequest: ContextRequest[F, A])
+    def decodeR[B: Decoder](f: B => F[Response[F]]): F[Response[F]] = {
+      val dsl = new Http4sDsl[F] {}
+      import dsl._
+
+      val attempt = Trace[F].span("codec.decodeR") {
+        contextRequest.req.asJsonDecode[B].attempt
+      }
+
+      attempt.flatMap {
+        case Right(a) => f(a)
+        case Left(e)  => BadRequest()
+      }
+    }
+
 end codec
