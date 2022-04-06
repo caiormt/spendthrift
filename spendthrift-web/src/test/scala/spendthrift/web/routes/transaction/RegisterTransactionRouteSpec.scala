@@ -22,6 +22,7 @@ import spendthrift.ports.*
 import spendthrift.commands.usecases.transaction.*
 
 import spendthrift.domain.entities.transactions.*
+import spendthrift.domain.entities.users.*
 
 import spendthrift.effects.generators.*
 
@@ -68,8 +69,10 @@ final class RegisterTransactionRouteSpec extends HttpRouteSuite {
     val api        = new RegisterTransactionRoute[IO](controller)
 
     val response = api.routes.orNotFound.run(
-      Request[IO](Method.POST, uri"/transactions")
-        .withEntity(entity)
+      AuthedRequest(
+        UserPrincipal(UserId(nilUUID)),
+        Request[IO](Method.POST, uri"/transactions").withEntity(entity)
+      )
     )
 
     checkAll[Json](response, Status.Created, f = checkRegisterTransaction(entity))
@@ -116,8 +119,10 @@ final class RegisterTransactionRouteSpec extends HttpRouteSuite {
     val api        = new RegisterTransactionRoute[IO](controller)
 
     val response = api.routes.orNotFound.run(
-      Request[IO](Method.POST, uri"/transactions")
-        .withEntity(entity)
+      AuthedRequest(
+        UserPrincipal(UserId(nilUUID)),
+        Request[IO](Method.POST, uri"/transactions").withEntity(entity)
+      )
     )
 
     checkAll[Json](response, Status.Created, f = checkRegisterTransaction(expected))
@@ -164,8 +169,10 @@ final class RegisterTransactionRouteSpec extends HttpRouteSuite {
     val api        = new RegisterTransactionRoute[IO](controller)
 
     val response = api.routes.orNotFound.run(
-      Request[IO](Method.POST, uri"/transactions")
-        .withEntity(entity)
+      AuthedRequest(
+        UserPrincipal(UserId(nilUUID)),
+        Request[IO](Method.POST, uri"/transactions").withEntity(entity)
+      )
     )
 
     checkAll[Json](response, Status.Created, f = checkRegisterTransaction(expected))

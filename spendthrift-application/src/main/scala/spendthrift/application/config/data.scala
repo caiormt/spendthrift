@@ -29,9 +29,16 @@ object data:
   // format: on
 
   // format: off
+  final case class AuthenticationConfig(
+      jwtSecret: Secret[String]
+  ) derives Eq, Show
+  // format: on
+
+  // format: off
   final case class AppConfig(
       database: DatabaseConfig,
-      http: HttpConfig
+      http: HttpConfig,
+      auth: AuthenticationConfig
   ) derives Eq, Show
   // format: on
 
@@ -67,7 +74,13 @@ object data:
       port("HTTP_SERVER_PORT").default(port"8081")
     ).parMapN(HttpConfig.apply)
 
+  val authConfig: ConfigValue[Effect, AuthenticationConfig] = {
+    val secret = env("AUTH_JWT_SECRET").as[String].secret.default(Secret("spendthrift"))
+
+    secret.map(AuthenticationConfig.apply)
+  }
+
   val appConfig: ConfigValue[Effect, AppConfig] =
-    (databaseConfig, httpConfig).parMapN(AppConfig.apply)
+    (databaseConfig, httpConfig, authConfig).parMapN(AppConfig.apply)
 
 end data

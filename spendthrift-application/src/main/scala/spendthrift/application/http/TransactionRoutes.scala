@@ -10,16 +10,25 @@ import org.http4s.*
 
 import spendthrift.application.modules.controllers.*
 
+import spendthrift.domain.entities.users.*
+
 import spendthrift.web.routes.transaction.*
 
 object TransactionRoutes:
 
-  private val RESOURCE_PATH_R = "^/transactions".r.unanchored
+  private val RESOURCE_PATH_R =
+    "/transactions/?".r
 
-  def classify(renderdUri: String): Option[String] =
-    renderdUri match {
-      case RESOURCE_PATH_R() => "/transactions".some
-      case _                 => none
+  private val RESOURCE_ID_PATH_R =
+    "/transactions/[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/?".r
+
+  def classify[F[_]: Sync](request: Request[F]): F[Option[String]] =
+    Sync[F].blocking {
+      request.uri.renderString match {
+        case RESOURCE_PATH_R()    => "/transactions".some
+        case RESOURCE_ID_PATH_R() => "/transactions/{transaction_id}".some
+        case _                    => none
+      }
     }
 
 end TransactionRoutes
@@ -34,7 +43,7 @@ final class TransactionRoutes[F[_]: Concurrent: Trace](controllers: TransactionC
   private val findTransactionByIdRoute =
     new FindTransactionByIdRoute[F](findTransactionByIdController).routes
 
-  final val routes: HttpRoutes[F] =
+  final val authedRoutes: AuthedRoutes[Principal, F] =
     registerTransactionRoute <+> findTransactionByIdRoute
 
 end TransactionRoutes

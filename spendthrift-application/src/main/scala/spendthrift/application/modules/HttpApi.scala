@@ -12,8 +12,10 @@ import natchez.*
 import natchez.http4s.*
 
 import org.http4s.*
+import org.http4s.headers.*
 import org.http4s.implicits.*
 import org.http4s.metrics.*
+import org.http4s.server.*
 import org.http4s.server.middleware.*
 
 import sup.data.*
@@ -21,37 +23,41 @@ import sup.modules.circe.given
 
 import spendthrift.application.http.*
 
+import spendthrift.commands.dtos.authenticateusers.*
+import spendthrift.commands.usecases.user.*
+
+import spendthrift.domain.entities.users.*
+import spendthrift.domain.errors.authentication.*
+
 import spendthrift.web.routes.healthcheck.*
 
 import scala.concurrent.duration.*
 
 object HttpApi:
 
-  def make[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F]): F[HttpApi[F]] =
+  def make[F[_]: Async: CollectorRegistry: Trace](
+      controllers: Controllers[F],
+      authenticate: AuthenticateUserUseCase[F]
+  ): F[HttpApi[F]] =
     EpimetheusOps
       .register[F](summon[CollectorRegistry[F]], Name("server"))
-      .map(meteredRoutes[F])
-      .flatMap { meteredRoutes =>
-        Sync[F].delay(new HttpApi[F](controllers)(meteredRoutes))
+      .flatMap { metricOps =>
+        Sync[F].delay(new HttpApi[F](controllers, authenticate)(metricOps))
       }
 
-  private def meteredRoutes[F[_]: Sync](metricOps: MetricsOps[F]): HttpRoutes[F] => HttpRoutes[F] =
-    Metrics.effect[F](metricOps, classifierF = req => classifiers(req.uri.renderString))
-
-  private def classifiers[F[_]: Sync](renderedUri: String): F[Option[String]] =
-    Sync[F].blocking {
-      // format: off
-      TransactionRoutes.classify(renderedUri) orElse
-      UserRoutes.classify(renderedUri)
-      // format: on
-    }
+  private def classifierF[F[_]: Sync]: Request[F] => F[Option[String]] = req =>
+    OptionT(TransactionRoutes.classify(req))
+      .orElseF(UserRoutes.classify(req))
+      .value
 
 end HttpApi
 
-final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controllers[F])(
-    meteredRoutes: HttpRoutes[F] => HttpRoutes[F]
-):
+final class HttpApi[F[_]: Async: CollectorRegistry: Trace](
+    controllers: Controllers[F],
+    authenticate: AuthenticateUserUseCase[F]
+)(metricsOps: MetricsOps[F]):
 
+  import HttpApi.*
   import controllers.*
 
   // Infrastructure Routes
@@ -59,39 +65,66 @@ final class HttpApi[F[_]: Async: CollectorRegistry: Trace](controllers: Controll
   private val metricsRoutes     = Scraper.routes(summon[CollectorRegistry[F]])
 
   // Application Routes
-  private val transactionRoutes = new TransactionRoutes(transactionController).routes
-  private val userRoutes        = new UserRoutes(userController).routes
+  private val transactionRoutes = new TransactionRoutes(transactionController).authedRoutes
+  private val userRoutes        = new UserRoutes(userController).authedRoutes
 
   // Custom Middlewares
   // format: off
   private val infrastructureMiddleware: HttpRoutes[F] => HttpRoutes[F] = {
-    { 
+    {
       (http: HttpRoutes[F]) => RequestLogger.httpRoutes(logHeaders = true, logBody = false)(http)
-    } andThen { 
+    } andThen {
       (http: HttpRoutes[F]) => ResponseLogger.httpRoutes(logHeaders = true, logBody = false)(http)
     }
   }
 
   private val applicationMiddleware: HttpRoutes[F] => HttpRoutes[F] = {
-    { 
+    {
       (http: HttpRoutes[F]) => RequestLogger.httpRoutes(logHeaders = true, logBody = true)(http)
-    } andThen { 
+    } andThen {
       (http: HttpRoutes[F]) => ResponseLogger.httpRoutes(logHeaders = true, logBody = true)(http)
     } andThen {
-      (http: HttpRoutes[F]) => meteredRoutes(http)
+      (http: HttpRoutes[F]) => Metrics.effect[F](metricsOps, classifierF = classifierF)(http)
     } andThen {
       (http: HttpRoutes[F]) => NatchezMiddleware.server[F](http)
     }
   }
   // format: on
 
+  // Handling authentication
+  private val authUser: Kleisli[OptionT[F, *], Request[F], Principal] =
+    Kleisli { req =>
+      OptionT
+        .fromOption[F](req.headers.get[Authorization])
+        .flatMap {
+          case Authorization(Credentials.Token(AuthScheme.Bearer, token)) =>
+            OptionT {
+              authenticate
+                .run(AuthenticateUser.Jwt(token))
+                .map(Some.apply)
+                .recover {
+                  case _: AuthenticationError => none
+                }
+            }
+
+          case _: Authorization =>
+            OptionT.none
+        }
+    }
+
+  private val authMiddleware: AuthMiddleware[F, Principal] =
+    AuthMiddleware(authUser)
+
   // Combining all the infrastructure routes
   private val infrastructureRoutes: HttpRoutes[F] =
     healthCheckRoutes <+> metricsRoutes
 
+  private val applicationAuthedRoutes: AuthedRoutes[Principal, F] =
+    transactionRoutes <+> userRoutes
+
   // Combining all the application routes
   private val applicationRoutes: HttpRoutes[F] =
-    transactionRoutes <+> userRoutes
+    authMiddleware(applicationAuthedRoutes)
 
   // Combining all routes
   private val routes: HttpRoutes[F] =

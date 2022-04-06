@@ -22,3 +22,8 @@ object users:
       id: UserId
   ) derives Eq, Show
   // format: on
+
+  sealed trait Principal {
+    def id: UserId
+  }
+  final case class UserPrincipal(id: UserId) extends Principal

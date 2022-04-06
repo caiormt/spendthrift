@@ -29,11 +29,15 @@ import sup.data.*
 import spendthrift.effect.extensions.sup.*
 
 import spendthrift.adapters.repositories.sql.*
+import spendthrift.adapters.services.auth.*
 
 import spendthrift.application.config.data.*
 import spendthrift.application.modules.*
 
+import spendthrift.commands.usecases.user.*
+
 import java.net.*
+import java.nio.charset.StandardCharsets.*
 
 import scala.concurrent.duration.*
 
@@ -51,7 +55,7 @@ object App extends IOApp.Simple:
           val httpRoutes =
             Resources
               .make[G](config)
-              .evalMap(api[G])
+              .evalMap(api[G](config))
               .map(_.httpRoutes)
 
           entryPoint
@@ -77,15 +81,16 @@ object App extends IOApp.Simple:
       .withHttpApp(httpApp)
       .build
 
-  def api[F[_]: Async: Network: Console: Trace](resources: Resources[F]): F[HttpApi[F]] = {
+  def api[F[_]: Async: Network: Console: Trace](config: AppConfig)(resources: Resources[F]): F[HttpApi[F]] = {
     import resources.given
 
     for {
-      repositories   <- Repositories.makeSkunk[F](resources.sessionPool)
       healthReporter <- healthReporter[F](resources)
+      authenticate   <- userAuthentication[F](config.auth)
+      repositories   <- Repositories.makeSkunk[F](resources.sessionPool)
       useCases       <- UseCases.make[F](repositories)
       controllers    <- Controllers.make[F](useCases, healthReporter)
-      api            <- HttpApi.make[F](controllers)
+      api            <- HttpApi.make[F](controllers, authenticate)
     } yield api
   }
 
@@ -112,6 +117,11 @@ object App extends IOApp.Simple:
           .withReporter(ReporterConfiguration.fromEnv)
           .getTracer
       }
+    }
+
+  def userAuthentication[F[_]: Sync: Trace](config: AuthenticationConfig): F[AuthenticateUserUseCase[F]] =
+    JwtVerifierService.make[F](config.jwtSecret.value.getBytes(UTF_8)).flatMap { jwtVerifier =>
+      AuthenticateUserUseCase.make[F](jwtVerifier)
     }
 
 end App
